@@ -1,8 +1,35 @@
 import { View, StyleSheet, FlatList } from "react-native";
 import { useRouter } from "expo-router";
 import { ConversationListItem } from "../../components/ConversationListItem";
+import { WebSocketManager } from "../../utils/websocketManager";
+import { useEffect } from "react";
+import { getThread, saveThread } from "../../utils/storage";
 
 export default function MessagingScreen() {
+  useEffect(() => {
+    const ws = WebSocketManager.getInstance();
+
+    ws.connect("ws://your-server-url", async (incoming) => {
+      console.log("Received:", incoming);
+      // TODO: Save to storage and update UI
+
+      const { from, body, timestamp } = incoming;
+
+      const message = {
+        id: Date.now().toString(),
+        body,
+        timestamp,
+        isCurrentUser: false,
+      };
+
+      const thread = await getThread(from);
+      const updated = [...thread, message];
+      await saveThread(from, updated);
+    });
+
+    return () => ws.disconnect();
+  }, []);
+
   const router = useRouter();
 
   const conversations = [
