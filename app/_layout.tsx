@@ -27,9 +27,10 @@ export default function Layout() {
         }}
       />
       <Tabs.Screen
-        name="idea"
+        name="messaging"
         options={{
-          title: "Idea",
+          headerShown: false,
+          title: "Messaging",
           tabBarIcon: ({ color, size }) => (
             <FontAwesome5 name="lightbulb" size={size} color={color} />
           ),
