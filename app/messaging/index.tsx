@@ -2,18 +2,30 @@ import { View, StyleSheet, FlatList } from "react-native";
 import { useRouter } from "expo-router";
 import { ConversationListItem } from "../../components/ConversationListItem";
 import { WebSocketManager } from "../../utils/websocketManager";
-import { useEffect } from "react";
-import { getThread, saveThread } from "../../utils/storage";
+import { useEffect, useState } from "react";
+import { getAllThreads, getThread, saveThread } from "../../utils/storage";
+import { WEBSOCKET_URL } from "../../config";
 
 export default function MessagingScreen() {
+  const [conversations, setConversations] = useState<any[]>([]);
+  const router = useRouter();
+
+  useEffect(() => {
+    const loadConversations = async () => {
+      const threads = await getAllThreads();
+      setConversations(threads);
+    };
+    loadConversations();
+  }, []);
+
   useEffect(() => {
     const ws = WebSocketManager.getInstance();
 
-    ws.connect("ws://your-server-url", async (incoming) => {
+    ws.connect(WEBSOCKET_URL, async (incoming) => {
       console.log("Received:", incoming);
       // TODO: Save to storage and update UI
 
-      const { from, body, timestamp } = incoming;
+      const { from, body, timestamp }_ = incoming;
 
       const message = {
         id: Date.now().toString(),
@@ -25,50 +37,14 @@ export default function MessagingScreen() {
       const thread = await getThread(from);
       const updated = [...thread, message];
       await saveThread(from, updated);
+
+      // Update the conversations state
+      const newConversations = await getAllThreads();
+      setConversations(newConversations);
     });
 
     return () => ws.disconnect();
   }, []);
-
-  const router = useRouter();
-
-  const conversations = [
-    {
-      username: "Timmy",
-      messages: [
-        { id: "1", body: "Hello", timestamp: new Date(), isCurrentUser: true },
-        {
-          id: "2",
-          body: "How are you?",
-          timestamp: new Date(),
-          isCurrentUser: true,
-        },
-        {
-          id: "3",
-          body: "I'm good!",
-          timestamp: new Date(),
-          isCurrentUser: false,
-        },
-      ],
-    },
-    {
-      username: "Sarah",
-      messages: [
-        {
-          id: "1",
-          body: "Hey! Did you finish it?",
-          timestamp: new Date(),
-          isCurrentUser: false,
-        },
-        {
-          id: "2",
-          body: "Not yet. Working on it.",
-          timestamp: new Date(),
-          isCurrentUser: true,
-        },
-      ],
-    },
-  ];
 
   return (
     <View style={styles.container}>

@@ -32,3 +32,19 @@ export async function getThread(username: string): Promise<any[]> {
     return [];
   }
 }
+
+export async function getAllThreads() {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const threadKeys = keys.filter((key) => key.startsWith("thread-"));
+    const threads = await AsyncStorage.multiGet(threadKeys);
+    return threads.map(([key, value]) => {
+      const username = key.replace("thread-", "");
+      const messages = value ? JSON.parse(value) : [];
+      return { username, messages };
+    });
+  } catch (err) {
+    console.error("Error retrieving all threads", err);
+    return [];
+  }
+}
